@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Siber Kasa v4.3</title>
+    <title>Siber Kasa Pro v4.4</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b1117">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,18 +21,15 @@
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: env(safe-area-inset-top) 15px 80px 15px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color); color: var(--text-main);
+            margin: 0; padding: env(safe-area-inset-top) 15px 80px 15px;
             display: flex; flex-direction: column; align-items: center;
         }
 
         .header {
             width: 100%; max-width: 500px;
-            background: var(--frame-color);
-            border: 1px solid var(--neon-blue);
+            background: var(--frame-color); border: 1px solid var(--neon-blue);
             border-radius: 20px; padding: 25px; margin-top: 20px;
             text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
@@ -52,7 +49,7 @@
         .asset-name { font-size: 0.9rem; font-weight: bold; }
 
         input {
-            width: 90px; background: var(--input-bg);
+            width: 95px; background: var(--input-bg);
             border: 1px solid #30363d; color: var(--cyber-green);
             padding: 12px; border-radius: 8px;
             font-family: 'Consolas', monospace; text-align: center; font-size: 1rem;
@@ -93,66 +90,82 @@
 <body>
 
     <div class="header">
-        <div style="font-size: 0.8rem; color: var(--text-dim);">TOPLAM PORTFÖY DEĞERİ (TL)</div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">TOPLAM PORTFÖY (TL)</div>
         <div id="total-val" class="total-value">0,00 TL</div>
-        <div id="status" style="font-size: 0.65rem; color: var(--text-dim);">Veri bekleniyor...</div>
+        <div id="status" style="font-size: 0.65rem; color: var(--text-dim);">Sistem başlatılıyor...</div>
     </div>
 
-    <div class="section-title">CANLI PİYASA (ALIŞ)</div>
+    <div class="section-title">CANLI VERİ (KASKAT)</div>
     <div class="rates-container">
         <div class="rate-box"><span style="font-size:0.7rem; display:block;">USD/TRY</span><span id="rate-usd" class="rate-val">...</span></div>
         <div class="rate-box"><span style="font-size:0.7rem; display:block;">GRAM ALTIN</span><span id="rate-gram" class="rate-val">...</span></div>
         <div class="rate-box"><span style="font-size:0.7rem; display:block;">ÇEYREK ALTIN</span><span id="rate-ceyrek" class="rate-val">...</span></div>
     </div>
 
-    <div class="section-title">VARLIKLARIM</div>
-    <div id="asset-list"></div>
+    <div id="asset-list" style="width:100%; max-width:500px;"></div>
 
     <div class="chart-container"><canvas id="growthChart"></canvas></div>
 
     <button class="btn-main" onclick="saveMilestone()">AYLIK DEĞİŞİMİ KAYDET</button>
 
     <div class="section-title">GEÇMİŞ KAYITLAR</div>
-    <div id="milestone-list"></div>
+    <div id="milestone-list" style="width:100%; max-width:500px;"></div>
 
-    <div class="footer">Siber Kasa v4.3 - Mustafa Üner <br> Veri Kaynağı: Piyasa (CORS-Proxy.io)</div>
+    <div class="footer">Siber Kasa v4.4 - Mustafa Üner <br> Veri Modu: Redundant Cascade</div>
 
     <script>
-        // Daha hızlı ve yeni bir proxy servisi: corsproxy.io
-        const API_URL = "https://corsproxy.io/?https://finans.truncgil.com/today.json";
-
         let rates = { usd: 0, gram: 0, ceyrek: 0 };
         let myAssets = JSON.parse(localStorage.getItem('assets')) || { usd: 0, gram: 0, ceyrek: 0, nakit: 0 };
         let history = JSON.parse(localStorage.getItem('history')) || [];
         let milestones = JSON.parse(localStorage.getItem('milestones')) || [];
         let chartInstance = null;
 
+        // Kaskat Veri Motoru
         async function fetchRates() {
-            try {
-                document.getElementById('status').innerText = 'Veriler güncelleniyor...';
-                const response = await fetch(API_URL);
-                if (!response.ok) throw new Error('Ağ yanıtı düzgün değil');
+            const statusLabel = document.getElementById('status');
 
-                const data = await response.json();
+            // 1. Strateji: Doğrudan veya corsproxy.io üzerinden yerel kaynak
+            const strategies = [
+                () => fetch("https://corsproxy.io/?https://finans.truncgil.com/today.json").then(r => r.json()),
+                () => fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://finans.truncgil.com/today.json"))
+                    .then(r => r.json()).then(d => JSON.parse(d.contents)),
+                // 2. Strateji: Global API (Fallback)
+                () => fetch("https://open.er-api.com/v6/latest/USD").then(r => r.json())
+            ];
 
-                // Veri çekme ve sayısal dönüşüm (Türkçe virgül formatını noktaya çevirir)
-                const parseVal = (val) => parseFloat(val.replace(".", "").replace(",", ".")) || 0;
+            for (let i = 0; i < strategies.length; i++) {
+                try {
+                    statusLabel.innerText = `Deneme ${i+1}/3...`;
+                    const data = await strategies[i]();
 
-                rates.usd = parseVal(data["ABD DOLARI"].Alış);
-                rates.gram = parseVal(data["Gram Altın"].Alış);
-                rates.ceyrek = parseVal(data["Çeyrek Altın"].Alış);
+                    if (data.TRY && data.rates) { // Global Fallback Modu
+                        rates.usd = data.rates.TRY;
+                        // O anki tahmini altın gram fiyatı (Global rasyo üzerinden yaklaşık)
+                        rates.gram = (rates.usd * 75); // Geçici fallback
+                    } else { // Truncgil Modu
+                        const parseVal = (v) => parseFloat(v.replace(".", "").replace(",", ".")) || 0;
+                        rates.usd = parseVal(data["ABD DOLARI"].Alış);
+                        rates.gram = parseVal(data["Gram Altın"].Alış);
+                        rates.ceyrek = parseVal(data["Çeyrek Altın"].Alış);
+                    }
 
-                // UI Güncelleme
-                document.getElementById('rate-usd').innerText = rates.usd.toFixed(2) + ' ₺';
-                document.getElementById('rate-gram').innerText = rates.gram.toFixed(2) + ' ₺';
-                document.getElementById('rate-ceyrek').innerText = rates.ceyrek.toFixed(0) + ' ₺';
-
-                document.getElementById('status').innerText = 'Güncellendi: ' + new Date().toLocaleTimeString();
-                calculateTotal();
-            } catch (e) {
-                document.getElementById('status').innerText = 'Bağlantı sorunu. Otomatik denenecek...';
-                console.error("Hata:", e);
+                    if (rates.usd > 0) {
+                        updateUI();
+                        statusLabel.innerText = 'Aktif: ' + new Date().toLocaleTimeString();
+                        return; // Başarılıysa döngüden çık
+                    }
+                } catch (e) {
+                    console.warn(`Strateji ${i+1} başarısız.`);
+                }
             }
+            statusLabel.innerText = 'Tüm kaynaklar başarısız. Bekleniyor...';
+        }
+
+        function updateUI() {
+            document.getElementById('rate-usd').innerText = rates.usd.toFixed(2) + ' ₺';
+            document.getElementById('rate-gram').innerText = rates.gram.toFixed(2) + ' ₺';
+            document.getElementById('rate-ceyrek').innerText = rates.ceyrek > 0 ? rates.ceyrek.toFixed(0) + ' ₺' : (rates.gram * 1.63).toFixed(0) + ' ₺';
+            calculateTotal();
         }
 
         function renderAssets() {
@@ -186,7 +199,7 @@
             const results = {
                 usd: myAssets.usd * (rates.usd || 0),
                 gram: myAssets.gram * (rates.gram || 0),
-                ceyrek: myAssets.ceyrek * (rates.ceyrek || 0),
+                ceyrek: myAssets.ceyrek * (rates.ceyrek || (rates.gram * 1.63)),
                 nakit: myAssets.nakit || 0
             };
 
@@ -197,7 +210,6 @@
 
             const total = Object.values(results).reduce((a, b) => a + b, 0);
             document.getElementById('total-val').innerText = total.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ₺';
-
             saveDailyData(total);
         }
 
@@ -216,7 +228,6 @@
 
         function saveMilestone() {
             const total = document.getElementById('total-val').innerText;
-            if(total === "0,00 TL") return alert("Kayıt için önce varlık miktarınızı girin.");
             milestones.unshift({ date: new Date().toLocaleString('tr-TR'), value: total });
             localStorage.setItem('milestones', JSON.stringify(milestones));
             renderMilestones();
@@ -230,8 +241,7 @@
         }
 
         function renderChart() {
-            const canvas = document.getElementById('growthChart');
-            const ctx = canvas.getContext('2d');
+            const ctx = document.getElementById('growthChart').getContext('2d');
             if(chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
@@ -240,7 +250,7 @@
                     datasets: [{
                         data: history.map(h => h.value),
                         borderColor: '#00d2ff', backgroundColor: 'rgba(0, 210, 255, 0.1)',
-                        fill: true, tension: 0.3, pointRadius: 0
+                        fill: true, tension: 0.3, pointRadius: 2
                     }]
                 },
                 options: {
@@ -255,7 +265,7 @@
             renderAssets();
             renderMilestones();
             fetchRates();
-            setInterval(fetchRates, 60000); // 1 dakikada bir otomatik yenile
+            setInterval(fetchRates, 120000); // 2 dakikada bir kontrol
         };
     </script>
 </body>
