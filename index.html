@@ -17,7 +17,6 @@
             --text-main: #c9d1d9;
             --text-dim: #8b949e;
             --input-bg: #1c2128;
-            --danger: #ff4444;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
@@ -27,148 +26,102 @@
             color: var(--text-main);
             margin: 0;
             padding: env(safe-area-inset-top) 15px 80px 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            display: flex; flex-direction: column; align-items: center;
         }
 
         .header {
-            width: 100%;
-            max-width: 500px;
+            width: 100%; max-width: 500px;
             background: var(--frame-color);
             border: 1px solid var(--neon-blue);
-            border-radius: 20px;
-            padding: 25px;
-            margin-top: 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 20px; padding: 25px; margin-top: 20px;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .total-title { font-size: 0.85rem; color: var(--text-dim); font-weight: bold; letter-spacing: 1px; }
         .total-value { font-size: 2.2rem; color: var(--cyber-green); font-family: 'Consolas', monospace; margin: 10px 0; font-weight: bold; }
 
         .section-title { width: 100%; max-width: 500px; margin: 25px 0 10px 5px; font-size: 1rem; color: var(--neon-blue); font-weight: bold; }
-        
+
         .asset-card {
-            width: 100%;
-            max-width: 500px;
-            background: var(--frame-color);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            width: 100%; max-width: 500px;
+            background: var(--frame-color); border-radius: 15px;
+            padding: 15px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 10px;
         }
 
         .asset-info { flex-grow: 1; }
         .asset-name { font-size: 0.9rem; font-weight: bold; }
-        .asset-price { font-size: 0.75rem; color: var(--text-dim); }
 
         input {
-            width: 90px;
-            background: var(--input-bg);
-            border: 1px solid #30363d;
-            color: var(--cyber-green);
-            padding: 12px;
-            border-radius: 8px;
-            font-family: 'Consolas', monospace;
-            text-align: center;
-            font-size: 1rem;
+            width: 90px; background: var(--input-bg);
+            border: 1px solid #30363d; color: var(--cyber-green);
+            padding: 12px; border-radius: 8px;
+            font-family: 'Consolas', monospace; text-align: center; font-size: 1rem;
         }
 
-        .asset-tl { width: 120px; text-align: right; font-weight: bold; color: var(--text-main); font-size: 0.95rem; }
+        .asset-tl { width: 110px; text-align: right; font-weight: bold; font-size: 0.9rem; }
 
         .rates-container {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-            max-width: 500px;
-            overflow-x: auto;
-            padding: 5px 0;
+            display: flex; gap: 10px; width: 100%; max-width: 500px;
+            overflow-x: auto; padding: 5px 0;
         }
 
         .rate-box {
-            min-width: 130px;
-            background: var(--input-bg);
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid #30363d;
+            min-width: 120px; background: var(--input-bg);
+            padding: 12px; border-radius: 12px;
+            text-align: center; border: 1px solid #30363d;
         }
 
-        .rate-label { font-size: 0.7rem; color: var(--text-dim); display: block; margin-bottom: 4px; }
-        .rate-val { font-size: 1rem; font-weight: bold; color: var(--neon-blue); }
+        .rate-val { font-size: 0.95rem; font-weight: bold; color: var(--neon-blue); }
 
-        .chart-container {
-            width: 100%;
-            max-width: 500px;
-            background: var(--frame-color);
-            border-radius: 15px;
-            padding: 15px;
-            margin-top: 20px;
-        }
+        .chart-container { width: 100%; max-width: 500px; height: 180px; background: var(--frame-color); border-radius: 15px; padding: 15px; margin-top: 20px; }
 
         .btn-main {
-            width: 100%;
-            max-width: 500px;
-            min-height: 50px;
-            background: var(--neon-blue);
-            color: var(--bg-color);
-            border: none;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 1rem;
-            margin-top: 20px;
-            cursor: pointer;
+            width: 100%; max-width: 500px; min-height: 50px;
+            background: var(--neon-blue); color: var(--bg-color);
+            border: none; border-radius: 12px; font-weight: bold;
+            margin-top: 20px; cursor: pointer;
         }
 
         .milestone-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 15px;
-            border-bottom: 1px solid #30363d;
-            font-size: 0.9rem;
-            background: var(--frame-color);
-            margin-bottom: 5px;
-            border-radius: 8px;
+            display: flex; justify-content: space-between; padding: 12px;
+            border-bottom: 1px solid #30363d; font-size: 0.85rem;
         }
 
-        .footer { margin: 40px 0; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
+        .footer { margin: 30px 0; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="total-title">TOPLAM PORTFÖY DEĞERİ (TL)</div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">TOPLAM PORTFÖY DEĞERİ (TL)</div>
         <div id="total-val" class="total-value">0,00 TL</div>
-        <div id="status" style="font-size: 0.65rem; color: var(--text-dim);">Piyasa verileri alınıyor...</div>
+        <div id="status" style="font-size: 0.65rem; color: var(--text-dim);">Bağlanıyor...</div>
     </div>
 
     <div class="section-title">CANLI PİYASA (ALIŞ)</div>
     <div class="rates-container">
-        <div class="rate-box"><span class="rate-label">USD/TRY</span><span id="rate-usd" class="rate-val">---</span></div>
-        <div class="rate-box"><span class="rate-label">GRAM ALTIN</span><span id="rate-gram" class="rate-val">---</span></div>
-        <div class="rate-box"><span class="rate-label">ÇEYREK ALTIN</span><span id="rate-ceyrek" class="rate-val">---</span></div>
+        <div class="rate-box"><span style="font-size:0.7rem; display:block;">USD/TRY</span><span id="rate-usd" class="rate-val">---</span></div>
+        <div class="rate-box"><span style="font-size:0.7rem; display:block;">GRAM ALTIN</span><span id="rate-gram" class="rate-val">---</span></div>
+        <div class="rate-box"><span style="font-size:0.7rem; display:block;">ÇEYREK ALTIN</span><span id="rate-ceyrek" class="rate-val">---</span></div>
     </div>
 
     <div class="section-title">VARLIKLARIM</div>
     <div id="asset-list"></div>
 
-    <div class="chart-container">
-        <canvas id="growthChart"></canvas>
-    </div>
+    <div class="chart-container"><canvas id="growthChart"></canvas></div>
 
     <button class="btn-main" onclick="saveMilestone()">AYLIK DEĞİŞİMİ KAYDET</button>
 
     <div class="section-title">GEÇMİŞ KAYITLAR</div>
     <div id="milestone-list"></div>
 
-    <div class="footer">Siber Kasa v4.1 - Mustafa Üner <br> Veriler: Serbest Piyasa Entegrasyonu</div>
+    <div class="footer">Siber Kasa v4.2 - Mustafa Üner <br> Güvenli Proxy Entegrasyonu Aktif</div>
 
     <script>
-        const API_URL = "https://finans.truncgil.com/today.json"; // Türkiye için en stabil ücretsiz kaynak
-        
+        // CORS Engelini aşmak için Proxy kullanıyoruz
+        const PROXY_URL = "https://api.allorigins.win/get?url=";
+        const TARGET_URL = encodeURIComponent("https://finans.truncgil.com/today.json");
+
         let rates = { usd: 0, gram: 0, ceyrek: 0 };
         let myAssets = JSON.parse(localStorage.getItem('assets')) || { usd: 0, gram: 0, ceyrek: 0, nakit: 0 };
         let history = JSON.parse(localStorage.getItem('history')) || [];
@@ -177,24 +130,23 @@
 
         async function fetchRates() {
             try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
+                const response = await fetch(PROXY_URL + TARGET_URL);
+                const rawData = await response.json();
+                const data = JSON.parse(rawData.contents); // Proxy'den gelen veriyi işle
 
-                // Verileri kaynaktan güvenle çek ve temizle
                 rates.usd = parseFloat(data["ABD DOLARI"].Alış.replace(",", "."));
                 rates.gram = parseFloat(data["Gram Altın"].Alış.replace(",", "."));
-                // Çeyrek altın verisi genellikle "Çeyrek Altın" anahtarı altındadır
                 rates.ceyrek = parseFloat(data["Çeyrek Altın"].Alış.replace(",", "."));
 
-                document.getElementById('rate-usd').innerText = rates.usd.toLocaleString('tr-TR') + ' ₺';
-                document.getElementById('rate-gram').innerText = rates.gram.toLocaleString('tr-TR') + ' ₺';
-                document.getElementById('rate-ceyrek').innerText = rates.ceyrek.toLocaleString('tr-TR') + ' ₺';
-                
-                document.getElementById('status').innerText = 'Son Güncelleme: ' + new Date().toLocaleTimeString();
+                document.getElementById('rate-usd').innerText = rates.usd.toFixed(2) + ' ₺';
+                document.getElementById('rate-gram').innerText = rates.gram.toFixed(2) + ' ₺';
+                document.getElementById('rate-ceyrek').innerText = rates.ceyrek.toFixed(0) + ' ₺';
+
+                document.getElementById('status').innerText = 'Güncellendi: ' + new Date().toLocaleTimeString();
                 calculateTotal();
             } catch (e) {
-                console.error("Veri hatası:", e);
-                document.getElementById('status').innerText = 'Veri çekilemedi, tekrar deneniyor...';
+                document.getElementById('status').innerText = 'Proxy Hatası! Tekrar deneniyor...';
+                console.error("Hata ayrıntısı:", e);
             }
         }
 
@@ -206,17 +158,13 @@
                 { id: 'ceyrek', name: 'Çeyrek Altın (Adet)' },
                 { id: 'nakit', name: 'Nakit (TL)' }
             ];
-            
             container.innerHTML = '';
             types.forEach(asset => {
                 const div = document.createElement('div');
                 div.className = 'asset-card';
                 div.innerHTML = `
-                    <div class="asset-info">
-                        <div class="asset-name">${asset.name}</div>
-                    </div>
-                    <input type="number" inputmode="decimal" value="${myAssets[asset.id]}" 
-                        oninput="updateAsset('${asset.id}', this.value)">
+                    <div class="asset-info"><div class="asset-name">${asset.name}</div></div>
+                    <input type="number" inputmode="decimal" value="${myAssets[asset.id]}" oninput="updateAsset('${asset.id}', this.value)">
                     <div class="asset-tl" id="tl-${asset.id}">0,00 ₺</div>
                 `;
                 container.appendChild(div);
@@ -230,19 +178,21 @@
         }
 
         function calculateTotal() {
-            const usdTL = myAssets.usd * rates.usd;
-            const gramTL = myAssets.gram * rates.gram;
-            const ceyrekTL = myAssets.ceyrek * rates.ceyrek;
-            const nakitTL = myAssets.nakit;
+            const results = {
+                usd: myAssets.usd * rates.usd,
+                gram: myAssets.gram * rates.gram,
+                ceyrek: myAssets.ceyrek * rates.ceyrek,
+                nakit: myAssets.nakit
+            };
 
-            document.getElementById('tl-usd').innerText = usdTL.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ₺';
-            document.getElementById('tl-gram').innerText = gramTL.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ₺';
-            document.getElementById('tl-ceyrek').innerText = ceyrekTL.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ₺';
-            document.getElementById('tl-nakit').innerText = nakitTL.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ₺';
+            Object.keys(results).forEach(id => {
+                const el = document.getElementById(`tl-${id}`);
+                if(el) el.innerText = results[id].toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ₺';
+            });
 
-            const total = usdTL + gramTL + ceyrekTL + nakitTL;
+            const total = Object.values(results).reduce((a, b) => a + b, 0);
             document.getElementById('total-val').innerText = total.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ₺';
-            
+
             saveDailyData(total);
         }
 
@@ -260,12 +210,8 @@
         }
 
         function saveMilestone() {
-            const totalStr = document.getElementById('total-val').innerText;
-            const now = new Date();
-            milestones.unshift({
-                date: now.toLocaleDateString('tr-TR') + " " + now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}),
-                value: totalStr
-            });
+            const total = document.getElementById('total-val').innerText;
+            milestones.unshift({ date: new Date().toLocaleString('tr-TR'), value: total });
             localStorage.setItem('milestones', JSON.stringify(milestones));
             renderMilestones();
         }
@@ -273,38 +219,27 @@
         function renderMilestones() {
             const container = document.getElementById('milestone-list');
             container.innerHTML = milestones.map(m => `
-                <div class="milestone-item">
-                    <span>${m.date}</span>
-                    <span style="color:var(--cyber-green); font-weight:bold;">${m.value}</span>
-                </div>
+                <div class="milestone-item"><span>${m.date}</span><span style="color:var(--cyber-green); font-weight:bold;">${m.value}</span></div>
             `).join('');
         }
 
         function renderChart() {
             const ctx = document.getElementById('growthChart').getContext('2d');
             if(chartInstance) chartInstance.destroy();
-            
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: history.map(h => h.date.split('.')[0] + "/" + h.date.split('.')[1]),
+                    labels: history.map(h => h.date.substring(0,5)),
                     datasets: [{
                         data: history.map(h => h.value),
-                        borderColor: '#00d2ff',
-                        backgroundColor: 'rgba(0, 210, 255, 0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 2
+                        borderColor: '#00d2ff', backgroundColor: 'rgba(0, 210, 255, 0.1)',
+                        fill: true, tension: 0.3, pointRadius: 0
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: {
-                        y: { display: false },
-                        x: { ticks: { color: '#8b949e', font: {size: 10} }, grid: { display: false } }
-                    }
+                    scales: { y: { display: false }, x: { ticks: { color: '#8b949e', font: {size: 9} }, grid: { display: false } } }
                 }
             });
         }
@@ -313,7 +248,7 @@
             renderAssets();
             renderMilestones();
             fetchRates();
-            setInterval(fetchRates, 30000); 
+            setInterval(fetchRates, 60000);
         };
     </script>
 </body>
