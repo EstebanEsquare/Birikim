@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Siber Kasa Pro v5.0</title>
+    <title>Siber Kasa Pro v6.0</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b1117">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,8 +13,9 @@
             --bg-color: #0b1117; --frame-color: #161b22;
             --neon-blue: #00d2ff; --cyber-green: #39FF14;
             --text-main: #c9d1d9; --text-dim: #8b949e; --input-bg: #1c2128;
+            --danger: #ff4444;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: -apple-system, system-ui, sans-serif;
             background-color: var(--bg-color); color: var(--text-main);
@@ -24,90 +25,112 @@
         .header {
             width: 100%; max-width: 500px; background: var(--frame-color);
             border: 1px solid var(--neon-blue); border-radius: 20px;
-            padding: 25px; margin-top: 20px; text-align: center;
+            padding: 20px; margin-top: 15px; text-align: center;
         }
         .total-value { font-size: 2.2rem; color: var(--cyber-green); font-family: 'Consolas', monospace; font-weight: bold; }
-        .section-title { width: 100%; max-width: 500px; margin: 25px 0 10px 5px; font-size: 0.9rem; color: var(--neon-blue); font-weight: bold; letter-spacing: 1px; }
+        .rate-box { flex: 1; background: var(--input-bg); padding: 8px; border-radius: 12px; text-align: center; border: 1px solid #30363d; min-width: 100px;}
+        .rate-val { font-size: 0.9rem; font-weight: bold; color: var(--neon-blue); display: block; margin-top: 4px; }
         .asset-card {
             width: 100%; max-width: 500px; background: var(--frame-color);
-            border-radius: 15px; padding: 12px 15px; margin-bottom: 10px;
+            border-radius: 15px; padding: 10px 15px; margin-bottom: 8px;
             display: flex; align-items: center; justify-content: space-between;
         }
         input {
-            width: 100px; background: var(--input-bg); border: 1px solid #30363d;
-            color: var(--cyber-green); padding: 10px; border-radius: 8px;
+            width: 90px; background: var(--input-bg); border: 1px solid #30363d;
+            color: var(--cyber-green); padding: 8px; border-radius: 8px;
             font-family: 'Consolas', monospace; text-align: center; font-size: 1rem;
         }
-        .asset-tl { font-weight: bold; font-size: 0.95rem; color: var(--text-main); width: 120px; text-align: right; }
-        .rates-row { display: flex; gap: 8px; width: 100%; max-width: 500px; overflow-x: auto; padding: 5px 0; }
-        .rate-box { flex: 1; min-width: 110px; background: var(--input-bg); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid #30363d; }
-        .rate-val { font-size: 0.9rem; font-weight: bold; color: var(--neon-blue); display: block; margin-top: 4px; }
-        .chart-container { width: 100%; max-width: 500px; height: 160px; background: var(--frame-color); border-radius: 15px; padding: 15px; margin-top: 20px; }
-        .btn-main {
-            width: 100%; max-width: 500px; min-height: 50px; background: var(--neon-blue);
-            color: var(--bg-color); border: none; border-radius: 12px; font-weight: bold; margin-top: 20px;
+        .asset-tl { font-weight: bold; font-size: 0.9rem; color: var(--text-main); width: 110px; text-align: right; }
+        .btn-main { width: 100%; max-width: 500px; min-height: 50px; background: var(--neon-blue); color: var(--bg-color); border: none; border-radius: 12px; font-weight: bold; margin-top: 15px; }
+
+        /* Debug Console - Hata Çözümü İçin */
+        #debug-console {
+            width: 100%; max-width: 500px; background: #000; color: #aaa;
+            font-size: 0.6rem; padding: 10px; border-radius: 8px; margin-top: 15px;
+            font-family: monospace; border: 1px dashed #333; max-height: 80px; overflow-y: auto;
         }
-        .footer { margin: 30px 0; font-size: 0.65rem; color: var(--text-dim); text-align: center; line-height: 1.5; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 5px;">TOPLAM VARLIK DEĞERİ</div>
+        <div style="font-size: 0.7rem; color: var(--text-dim);">TOPLAM PORTFÖY</div>
         <div id="total-val" class="total-value">0,00 TL</div>
-        <div id="status" style="font-size: 0.6rem; color: var(--text-dim); margin-top: 8px;">Veriler çekiliyor...</div>
+        <div id="status" style="font-size: 0.6rem; color: var(--text-dim); margin-top: 5px;">Bağlantı aranıyor...</div>
     </div>
 
-    <div class="section-title">CANLI PİYASA (DIRECT API)</div>
-    <div class="rates-row">
-        <div class="rate-box"><span style="font-size:0.65rem;">USD/TRY</span><span id="rate-usd" class="rate-val">...</span></div>
-        <div class="rate-box"><span style="font-size:0.65rem;">GRAM (24K)</span><span id="rate-gram" class="rate-val">...</span></div>
-        <div class="rate-box"><span style="font-size:0.65rem;">ÇEYREK</span><span id="rate-ceyrek" class="rate-val">...</span></div>
+    <div style="display: flex; gap: 8px; width: 100%; max-width: 500px; margin-top: 15px;">
+        <div class="rate-box"><span style="font-size:0.6rem;">USD/TRY</span><span id="rate-usd" class="rate-val">...</span></div>
+        <div class="rate-box"><span style="font-size:0.6rem;">GRAM</span><span id="rate-gram" class="rate-val">...</span></div>
+        <div class="rate-box"><span style="font-size:0.6rem;">ÇEYREK</span><span id="rate-ceyrek" class="rate-val">...</span></div>
     </div>
 
-    <div id="asset-list" style="width:100%; max-width:500px; margin-top: 10px;"></div>
+    <div id="asset-list" style="width:100%; max-width:500px; margin-top: 15px;"></div>
 
-    <div class="chart-container"><canvas id="growthChart"></canvas></div>
+    <div id="debug-console">Sistem Günlüğü: Uygulama başlatıldı.</div>
 
-    <button class="btn-main" onclick="saveMilestone()">AYLIK DEĞİŞİMİ KAYDET</button>
+    <button class="btn-main" onclick="saveMilestone()">AYLIK KAYIT OLUŞTUR</button>
 
-    <div id="milestone-list" style="width:100%; max-width:500px; margin-top: 20px;"></div>
+    <div id="milestone-list" style="width:100%; max-width:500px; margin-top: 15px;"></div>
 
-    <div class="footer">Siber Kasa v5.0 - Mustafa Üner<br>Global Binance & FX Engine Aktif (No-Proxy)</div>
+    <div style="margin: 20px 0; font-size: 0.6rem; color: var(--text-dim); text-align: center;">
+        Siber Kasa v6.0 - Güvenli Veri Motoru
+    </div>
 
     <script>
+        const log = (msg) => {
+            const consoleEl = document.getElementById('debug-console');
+            consoleEl.innerHTML += `<br>> ${msg}`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        };
+
         let rates = { usd: 0, gram: 0, ceyrek: 0 };
         let myAssets = JSON.parse(localStorage.getItem('assets')) || { usd: 0, gram: 0, ceyrek: 0, nakit: 0 };
-        let history = JSON.parse(localStorage.getItem('history')) || [];
         let milestones = JSON.parse(localStorage.getItem('milestones')) || [];
-        let chartInstance = null;
 
         async function fetchRates() {
-            const statusLabel = document.getElementById('status');
+            log("Veri çekme işlemi denenecek...");
+
+            // Strateji 1: Doğrudan Frankfurter API (Forex için en stabil ve CORS dostu)
             try {
-                // 1. Dolar Kurunu Al (CORS Serbest)
-                const usdRes = await fetch("https://open.er-api.com/v6/latest/USD");
-                const usdData = await usdRes.json();
-                rates.usd = usdData.rates.TRY;
-
-                // 2. Altın Ons Fiyatını Al (Binance PAXG/USDT - CORS Serbest)
-                // 1 PAXG = 1 Troy Ounce Altın demektir.
-                const goldRes = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT");
-                const goldData = await goldRes.json();
-                const onsPriceInUsd = parseFloat(goldData.price);
-
-                // 3. Hesaplama: (Ons / 31.1035) * Dolar Kuru
-                // Banka makası ve TR piyasası için %0.8'lik bir düzeltme katsayısı ekliyoruz (Yapı Kredi uyumu için)
-                const marketAdjustment = 1.008;
-                rates.gram = (onsPriceInUsd / 31.1035) * rates.usd * marketAdjustment;
-                rates.ceyrek = rates.gram * 1.63 * 1.01; // Çeyrek rasyosu + işçilik
-
-                updateUI();
-                statusLabel.innerText = 'Canlı Bağlantı Aktif: ' + new Date().toLocaleTimeString();
+                log("Deneme 1: USD kuru alınıyor...");
+                const res = await fetch("https://api.frankfurter.app/latest?from=USD&to=TRY");
+                const data = await res.json();
+                rates.usd = data.rates.TRY;
+                log("USD Başarılı: " + rates.usd);
             } catch (e) {
-                statusLabel.innerText = 'Yenileniyor...';
-                console.error(e);
-                setTimeout(fetchRates, 5000); // Hata varsa 5 sn sonra tekrar dene
+                log("Deneme 1 Hata: " + e.message);
+                // Fallback USD (Yedek kaynak)
+                const res = await fetch("https://open.er-api.com/v6/latest/USD");
+                const data = await res.json();
+                rates.usd = data.rates.TRY;
+            }
+
+            // Strateji 2: Altın Verisi (Google Finance mantığıyla yedekli)
+            try {
+                log("Deneme 2: Altın Ons alınıyor...");
+                // Binance yerine daha 'nötr' bir kaynak deniyoruz
+                const res = await fetch("https://api.exchangerate.host/convert?from=XAU&to=USD&amount=1");
+                const data = await res.json();
+                // Eğer bu servis çalışmazsa (Bazen anahtar ister), Binance'e son bir şans veriyoruz
+                const onsPrice = data.result || 0;
+
+                if(onsPrice === 0) {
+                    log("Deneme 2 Yedek: Binance denenecek...");
+                    const bRes = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT");
+                    const bData = await bRes.json();
+                    rates.gram = (parseFloat(bData.price) / 31.1035) * rates.usd;
+                } else {
+                    rates.gram = (onsPrice / 31.1035) * rates.usd;
+                }
+
+                rates.ceyrek = rates.gram * 1.63;
+                log("Altın Başarılı.");
+                updateUI();
+                document.getElementById('status').innerText = 'Veriler Güncel: ' + new Date().toLocaleTimeString();
+            } catch (e) {
+                log("Altın Hatası: " + e.message);
+                document.getElementById('status').innerText = 'Bağlantı Hatası.';
             }
         }
 
@@ -131,7 +154,7 @@
                 const div = document.createElement('div');
                 div.className = 'asset-card';
                 div.innerHTML = `
-                    <div class="asset-name" style="font-size:0.85rem; font-weight:bold;">${asset.name}</div>
+                    <div style="font-size:0.85rem; font-weight:bold;">${asset.name}</div>
                     <input type="number" inputmode="decimal" value="${myAssets[asset.id]}" oninput="updateAsset('${asset.id}', this.value)">
                     <div class="asset-tl" id="tl-${asset.id}">0,00 ₺</div>
                 `;
@@ -158,18 +181,6 @@
             });
             const total = Object.values(results).reduce((a, b) => a + b, 0);
             document.getElementById('total-val').innerText = total.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' ₺';
-            saveDailyData(total);
-        }
-
-        function saveDailyData(total) {
-            if(total <= 0) return;
-            const today = new Date().toLocaleDateString('tr-TR');
-            if (history.length === 0 || history[history.length - 1].date !== today) {
-                history.push({ date: today, value: total });
-            } else { history[history.length - 1].value = total; }
-            if(history.length > 30) history.shift();
-            localStorage.setItem('history', JSON.stringify(history));
-            renderChart();
         }
 
         function saveMilestone() {
@@ -182,34 +193,13 @@
         function renderMilestones() {
             const container = document.getElementById('milestone-list');
             container.innerHTML = milestones.map(m => `
-                <div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #30363d; font-size:0.8rem;">
+                <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #30363d; font-size:0.75rem;">
                     <span>${m.date}</span><span style="color:var(--cyber-green); font-weight:bold;">${m.value}</span>
                 </div>
             `).join('');
         }
 
-        function renderChart() {
-            const ctx = document.getElementById('growthChart').getContext('2d');
-            if(chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: history.map(h => h.date.substring(0,5)),
-                    datasets: [{
-                        data: history.map(h => h.value),
-                        borderColor: '#00d2ff', backgroundColor: 'rgba(0, 210, 255, 0.05)',
-                        fill: true, tension: 0.3, pointRadius: 1
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { display: false }, x: { ticks: { color: '#8b949e', font: {size: 8} }, grid: { display: false } } }
-                }
-            });
-        }
-
-        window.onload = () => { renderAssets(); renderMilestones(); fetchRates(); setInterval(fetchRates, 30000); };
+        window.onload = () => { renderAssets(); renderMilestones(); fetchRates(); };
     </script>
 </body>
 </html>
