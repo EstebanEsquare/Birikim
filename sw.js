@@ -1,4 +1,4 @@
-const CACHE_NAME = 'siber-kasa-v2'; // v1'den v2'ye yükseltildi
+const CACHE_NAME = 'siber-kasa-v3'; 
 const ASSETS = [
   'index.html',
   'manifest.json',
