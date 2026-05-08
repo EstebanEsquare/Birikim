@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Siber Kasa v9.5</title>
+    <title>Siber Kasa v9.6</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b1117">
     <style>
@@ -23,8 +23,10 @@
         .btn-sub:active { background: #2d333b; }
         
         .milestone-item { padding: 12px 10px; border-bottom: 1px solid #333; }
-        .milestone-header { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; }
-        .milestone-detail { font-size: 0.65rem; color: #8b949e; background: #0b1117; padding: 6px; border-radius: 6px; }
+        .milestone-header { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px; }
+        .milestone-detail { font-size: 0.7rem; background: #0b1117; padding: 8px; border-radius: 8px; border: 1px solid #1c2128; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .detail-row:last-child { margin-bottom: 0; }
     </style>
 </head>
 <body>
@@ -121,11 +123,9 @@
             document.getElementById('total-val').innerText = total.toLocaleString('tr-TR', {minimumFractionDigits:2}) + " ₺";
         }
 
-        // --- ZAMAN KAPSÜLÜ (SNAPSHOT) DESTEKLİ KAYIT ---
         function saveMilestone() {
             let m = JSON.parse(localStorage.getItem('milestones')) || [];
             
-            // O anki tüm verilerin dondurulmuş kopyası
             let snapshot = {
                 varliklar: { usd: myAssets.usd, gram: myAssets.gram, ceyrek: myAssets.ceyrek, nakit: myAssets.nakit },
                 kurlar: { usd: rates.usd.toFixed(2), gram: rates.gram.toFixed(2), ceyrek: rates.ceyrek.toFixed(2) }
@@ -145,11 +145,17 @@
             const m = JSON.parse(localStorage.getItem('milestones')) || [];
             document.getElementById('milestone-list').innerHTML = m.map(x => {
                 let detayHtml = '';
-                // Eğer detay (snapshot) varsa, mini bir özet kutusu oluştur
-                if(x.detay && x.detay.varliklar) {
-                    const v = x.detay.varliklar;
+                if(x.detay) {
+                    const v = x.detay.varliklar || {};
+                    const k = x.detay.kurlar || {};
+                    
+                    // Sadece kurlar varsa veya sadece varlıklar varsa hata vermemesi için koruma eklendi
+                    const vText = v.usd !== undefined ? `<span style="color:#8b949e">Miktar:</span> <b>${v.usd}$</b> | <b>${v.gram}Gr</b> | <b>${v.ceyrek}Çey.</b> | <b>${v.nakit}₺</b>` : '';
+                    const kText = k.usd !== undefined ? `<span style="color:var(--blue)">Kurlar:</span> <b>${k.usd}₺</b> | <b>${k.gram}₺</b> | <b>${k.ceyrek}₺</b>` : '';
+                    
                     detayHtml = `<div class="milestone-detail">
-                        ${v.usd} $ | ${v.gram} Gr | ${v.ceyrek} Çeyrek | ${v.nakit} TL Nakit
+                        ${vText ? `<div class="detail-row" style="color:#c9d1d9">${vText}</div>` : ''}
+                        ${kText ? `<div class="detail-row" style="color:#00d2ff">${kText}</div>` : ''}
                     </div>`;
                 }
                 
@@ -157,7 +163,7 @@
                 <div class="milestone-item">
                     <div class="milestone-header">
                         <span>${x.d}</span>
-                        <b style="color:var(--green);">${x.v}</b>
+                        <b style="color:var(--green); font-size:1rem;">${x.v}</b>
                     </div>
                     ${detayHtml}
                 </div>`;
