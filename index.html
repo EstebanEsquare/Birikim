@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Siber Kasa v9.3</title>
+    <title>Siber Kasa v9.4</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b1117">
     <style>
@@ -12,9 +12,16 @@
         .header { width: 100%; max-width: 500px; background: var(--card); border: 1px solid var(--blue); border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 15px; }
         .total { font-size: 2.2rem; color: var(--green); font-family: monospace; font-weight: bold; }
         .asset-card { width: 100%; max-width: 500px; background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
-        input { width: 90px; background: #1c2128; border: 1px solid #333; color: var(--green); padding: 10px; border-radius: 8px; text-align: center; font-size: 1rem; }
+        input[type="number"] { width: 90px; background: #1c2128; border: 1px solid #333; color: var(--green); padding: 10px; border-radius: 8px; text-align: center; font-size: 1rem; }
         .rates { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 15px; }
         .rate-box { flex:1; background: var(--card); padding: 10px; border-radius: 10px; text-align: center; font-size: 0.75rem; border: 1px solid #333; }
+        
+        /* Yeni Buton Stilleri */
+        .btn-main { width: 100%; max-width: 500px; height: 50px; background: var(--blue); border: none; border-radius: 15px; margin-top: 10px; font-weight: bold; color: #000; cursor: pointer; }
+        .btn-main:active { opacity: 0.8; }
+        .action-row { display: flex; gap: 10px; width: 100%; max-width: 500px; margin-top: 15px; }
+        .btn-sub { flex: 1; height: 44px; background: #1c2128; border: 1px solid #333; border-radius: 12px; color: var(--text); font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+        .btn-sub:active { background: #2d333b; }
     </style>
 </head>
 <body>
@@ -33,19 +40,22 @@
 
     <div id="asset-list" style="width:100%; max-width:500px;"></div>
 
-    <button onclick="saveMilestone()" style="width:100%; max-width:500px; height:55px; background:var(--blue); border:none; border-radius:15px; margin-top:15px; font-weight:bold; color:#000;">AYLIK KAYIT OLUŞTUR</button>
+    <button class="btn-main" onclick="saveMilestone()">AYLIK KAYIT OLUŞTUR</button>
 
-    <div id="milestone-list" style="width:100%; max-width:500px; margin-top:20px;"></div>
+    <div class="action-row">
+        <button class="btn-sub" onclick="exportData()">💾 YEDEK AL (.txt)</button>
+        <button class="btn-sub" onclick="document.getElementById('import-file').click()">📂 GERİ YÜKLE</button>
+        <input type="file" id="import-file" style="display:none" accept=".txt, text/plain" onchange="importData(event)">
+    </div>
+
+    <div id="milestone-list" style="width:100%; max-width:500px; margin-top:20px; padding-bottom: 30px;"></div>
 
     <script>
-        // GOOGLE SCRIPT URL'Nİ BURAYA YAPIŞTIR
+        // KESİNLİKLE DOKUNULMAYAN VERİ ÇEKME MOTORU VE KATSAYILAR
         const GOOGLE_PROXY_URL = "https://script.google.com/macros/s/AKfycbxd8iKLp5urDIwyXRmnHAjqrxjQqfeXerSozDDOFTdzbAf3vhta6-7FvNdJBjwgN4B5Iw/exec";
-        
-        // --- BANKA MAKAS KALİBRASYONU ---
-        // Serbest piyasa değerlerini banka değerlerine eşitlemek için kullanılan çarpanlar
-        const KATSAYI_USD = 0.9708;    // İş Bankası (~44.02 TL bandı için)
-        const KATSAYI_GRAM = 0.9876;   // Yapı Kredi (~6762 TL bandı için)
-        const KATSAYI_CEYREK = 1.0000; // Çeyrek fiziki olduğu için aynı kalır
+        const KATSAYI_USD = 0.9708;
+        const KATSAYI_GRAM = 0.9876;
+        const KATSAYI_CEYREK = 1.0000;
 
         let rates = { usd: 0, gram: 0, ceyrek: 0 };
         let myAssets = JSON.parse(localStorage.getItem('assets')) || { usd: 0, gram: 0, ceyrek: 0, nakit: 0 };
@@ -61,7 +71,6 @@
                     return parseFloat(v.replace(/\./g, "").replace(",", ".")) || 0;
                 };
                 
-                // Ham verileri çek ve katsayılar ile çarp
                 let hamUsd = parse(data["USD"]["Alış"]);
                 rates.usd = hamUsd * KATSAYI_USD;
                 
@@ -71,7 +80,6 @@
                 let hamCeyrek = parse(data["ceyrek-altin"]["Alış"]);
                 rates.ceyrek = hamCeyrek * KATSAYI_CEYREK;
 
-                // Ekrana Yazdırma
                 document.getElementById('rate-usd').innerText = rates.usd.toFixed(2) + " ₺";
                 document.getElementById('rate-gram').innerText = rates.gram.toFixed(2) + " ₺";
                 document.getElementById('rate-ceyrek').innerText = rates.ceyrek.toFixed(0) + " ₺";
@@ -121,6 +129,72 @@
         function renderMilestones() {
             const m = JSON.parse(localStorage.getItem('milestones')) || [];
             document.getElementById('milestone-list').innerHTML = m.map(x => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; font-size:0.8rem;"><span>${x.d}</span><b>${x.v}</b></div>`).join('');
+        }
+
+        // --- YENİ EKLENEN YEDEKLEME VE GERİ YÜKLEME SİSTEMİ ---
+        
+        function exportData() {
+            // Hafızadaki tüm verileri topla
+            const dataToExport = {
+                assets: JSON.parse(localStorage.getItem('assets')) || { usd: 0, gram: 0, ceyrek: 0, nakit: 0 },
+                milestones: JSON.parse(localStorage.getItem('milestones')) || []
+            };
+
+            // Veriyi metin formatına çevir
+            const dataStr = JSON.stringify(dataToExport, null, 2);
+            // Mobilde sorun çıkarmaması için MIME tipini plain/text yapıyoruz
+            const blob = new Blob([dataStr], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            
+            // Tarihli Dosya Adı Oluşturma (Örn: SiberKasa_Yedek_2026-05-08)
+            const dateObj = new Date();
+            const dateStr = dateObj.toISOString().split('T')[0];
+            const fileName = `SiberKasa_Yedek_${dateStr}.txt`;
+
+            // İndirme işlemini tetikle
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // Verileri kontrol et ve hafızaya yaz
+                    if (importedData.assets) {
+                        localStorage.setItem('assets', JSON.stringify(importedData.assets));
+                        myAssets = importedData.assets; // Aktif değişkeni güncelle
+                    }
+                    if (importedData.milestones) {
+                        localStorage.setItem('milestones', JSON.stringify(importedData.milestones));
+                    }
+                    
+                    // Arayüzü yenile
+                    renderAssets();
+                    renderMilestones();
+                    calculateTotal();
+                    
+                    alert("Yedek başarıyla geri yüklendi!");
+                } catch (error) {
+                    alert("Hata: Yüklemeye çalıştığınız dosya geçerli bir yedekleme dosyası değil.");
+                    console.error("Yükleme hatası:", error);
+                }
+                
+                // Aynı dosyayı tekrar seçebilmek için input'u sıfırla
+                event.target.value = "";
+            };
+            
+            reader.readAsText(file);
         }
 
         window.onload = () => { renderAssets(); renderMilestones(); fetchRates(); setInterval(fetchRates, 60000); };
