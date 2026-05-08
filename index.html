@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Siber Kasa v9.2</title>
+    <title>Siber Kasa v9.3</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b1117">
     <style>
@@ -22,7 +22,7 @@
     <div class="header">
         <div style="font-size: 0.8rem; opacity: 0.7;">TOPLAM VARLIK (TL)</div>
         <div id="total-val" class="total">0,00 TL</div>
-        <div id="status" style="font-size:0.6rem; margin-top:10px; color: var(--blue);">Banka Verileri Bekleniyor...</div>
+        <div id="status" style="font-size:0.6rem; margin-top:10px; color: var(--blue);">Veriler Güncelleniyor...</div>
     </div>
 
     <div class="rates">
@@ -38,18 +38,20 @@
     <div id="milestone-list" style="width:100%; max-width:500px; margin-top:20px;"></div>
 
     <script>
-        // Senin Google Script Linkin (Hatasız şekilde gömüldü ve yönlendirme izni verildi)
+        // GOOGLE SCRIPT URL'Nİ BURAYA YAPIŞTIR
         const GOOGLE_PROXY_URL = "https://script.google.com/macros/s/AKfycbxd8iKLp5urDIwyXRmnHAjqrxjQqfeXerSozDDOFTdzbAf3vhta6-7FvNdJBjwgN4B5Iw/exec";
         
-        // Serbest piyasa Gram fiyatını, Yapı Kredi'deki 6787 TL hedefine uyarlayan katsayı
-        const YAPIKREDI_KATSAYISI = 0.9913;
+        // --- BANKA MAKAS KALİBRASYONU ---
+        // Serbest piyasa değerlerini banka değerlerine eşitlemek için kullanılan çarpanlar
+        const KATSAYI_USD = 0.9708;    // İş Bankası (~44.02 TL bandı için)
+        const KATSAYI_GRAM = 0.9876;   // Yapı Kredi (~6762 TL bandı için)
+        const KATSAYI_CEYREK = 1.0000; // Çeyrek fiziki olduğu için aynı kalır
 
         let rates = { usd: 0, gram: 0, ceyrek: 0 };
         let myAssets = JSON.parse(localStorage.getItem('assets')) || { usd: 0, gram: 0, ceyrek: 0, nakit: 0 };
 
         async function fetchRates() {
             try {
-                // Google Apps Script redirect (302) döndürdüğü için 'follow' kuralı eklendi
                 const response = await fetch(GOOGLE_PROXY_URL, { redirect: "follow" });
                 if(!response.ok) throw new Error("Ağ yanıtı olumsuz.");
                 const data = await response.json();
@@ -59,14 +61,15 @@
                     return parseFloat(v.replace(/\./g, "").replace(",", ".")) || 0;
                 };
                 
-                // Verileri Parse Etme
-                rates.usd = parse(data["USD"]["Alış"]);
+                // Ham verileri çek ve katsayılar ile çarp
+                let hamUsd = parse(data["USD"]["Alış"]);
+                rates.usd = hamUsd * KATSAYI_USD;
                 
-                // Has gram altını al ve Yapı Kredi oranına çek
-                let serbestGram = parse(data["gram-has-altin"]["Alış"]);
-                rates.gram = serbestGram * YAPIKREDI_KATSAYISI; 
+                let hamGram = parse(data["gram-has-altin"]["Alış"]);
+                rates.gram = hamGram * KATSAYI_GRAM; 
                 
-                rates.ceyrek = parse(data["ceyrek-altin"]["Alış"]);
+                let hamCeyrek = parse(data["ceyrek-altin"]["Alış"]);
+                rates.ceyrek = hamCeyrek * KATSAYI_CEYREK;
 
                 // Ekrana Yazdırma
                 document.getElementById('rate-usd').innerText = rates.usd.toFixed(2) + " ₺";
@@ -76,7 +79,7 @@
                 document.getElementById('status').innerText = "Son Senkronizasyon: " + new Date().toLocaleTimeString();
                 calculateTotal();
             } catch (e) {
-                document.getElementById('status').innerText = "Veri alınamıyor. Tekrar denenecek...";
+                document.getElementById('status').innerText = "Veri alınamıyor. Lütfen bekleyin...";
                 console.error("Hata Detayı:", e);
             }
         }
