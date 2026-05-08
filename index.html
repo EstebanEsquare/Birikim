@@ -2,111 +2,403 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Siber Kasa v8.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Siber Kasa v4.4</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --bg: #0b1117; --card: #161b22; --blue: #00d2ff; --green: #39FF14; --text: #c9d1d9; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .header { width: 100%; max-width: 500px; background: var(--card); border: 1px solid var(--blue); border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 15px; }
-        .total { font-size: 2.2rem; color: var(--green); font-family: monospace; font-weight: bold; }
-        .asset-card { width: 100%; max-width: 500px; background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
-        input { width: 90px; background: #1c2128; border: 1px solid #333; color: var(--green); padding: 10px; border-radius: 8px; text-align: center; font-size: 1rem; }
-        .rates { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 15px; }
-        .rate-box { flex:1; background: var(--card); padding: 10px; border-radius: 10px; text-align: center; font-size: 0.8rem; border: 1px solid #333; }
+        :root {
+            --bg-color: #0b1117;
+            --frame-color: #161b22;
+            --neon-blue: #00d2ff;
+            --cyber-green: #39FF14;
+            --text-main: #c9d1d9;
+            --text-dim: #8b949e;
+            --input-bg: #1c2128;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: env(safe-area-inset-top) 15px 80px 15px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .header {
+            width: 100%; max-width: 500px;
+            background: var(--frame-color);
+            border: 1px solid var(--neon-blue);
+            border-radius: 20px; padding: 25px; margin-top: 20px;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .total-value { font-size: 2.2rem; color: var(--cyber-green); font-family: 'Consolas', monospace; margin: 10px 0; font-weight: bold; }
+
+        .section-title { width: 100%; max-width: 500px; margin: 25px 0 10px 5px; font-size: 1rem; color: var(--neon-blue); font-weight: bold; }
+
+        .asset-card {
+            width: 100%; max-width: 500px;
+            background: var(--frame-color); border-radius: 15px;
+            padding: 15px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .asset-info { flex-grow: 1; }
+        .asset-name { font-size: 0.9rem; font-weight: bold; }
+
+        input {
+            width: 90px; background: var(--input-bg);
+            border: 1px solid #30363d; color: var(--cyber-green);
+            padding: 12px; border-radius: 8px;
+            font-family: 'Consolas', monospace; text-align: center; font-size: 1rem;
+        }
+
+        .asset-tl { width: 110px; text-align: right; font-weight: bold; font-size: 0.9rem; }
+
+        .rates-container {
+            display: flex; gap: 10px; width: 100%; max-width: 500px;
+            overflow-x: auto; padding: 5px 0;
+        }
+
+        .rate-box {
+            min-width: 120px; background: var(--input-bg);
+            padding: 12px; border-radius: 12px;
+            text-align: center; border: 1px solid #30363d;
+        }
+
+        .rate-val { font-size: 0.95rem; font-weight: bold; color: var(--neon-blue); }
+
+        .chart-container { width: 100%; max-width: 500px; height: 180px; background: var(--frame-color); border-radius: 15px; padding: 15px; margin-top: 20px; }
+
+        .btn-main {
+            width: 100%; max-width: 500px; min-height: 50px;
+            background: var(--neon-blue); color: var(--bg-color);
+            border: none; border-radius: 12px; font-weight: bold;
+            margin-top: 20px; cursor: pointer;
+        }
+
+        .milestone-item {
+            display: flex; justify-content: space-between; padding: 12px;
+            border-bottom: 1px solid #30363d; font-size: 0.85rem;
+        }
+
+        .footer { margin: 30px 0; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
+
+        /* Kaynak etiketi */
+        #source-badge {
+            font-size: 0.6rem;
+            padding: 2px 7px;
+            border-radius: 6px;
+            display: none;
+            margin-top: 4px;
+        }
+        .badge-live   { background: rgba(57,255,20,0.15);  color: var(--cyber-green); border: 1px solid var(--cyber-green); }
+        .badge-approx { background: rgba(255,165,0,0.15);  color: #FFA500;            border: 1px solid #FFA500; }
+        .badge-error  { background: rgba(255,80,80,0.15);  color: #FF5050;            border: 1px solid #FF5050; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div style="font-size: 0.8rem; opacity: 0.7;">TOPLAM VARLIK</div>
-        <div id="total-val" class="total">0,00 TL</div>
-        <div id="status" style="font-size:0.6rem; margin-top:10px; color: var(--blue);">Bağlantı Kuruluyor...</div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">TOPLAM PORTFÖY DEĞERİ (TL)</div>
+        <div id="total-val" class="total-value">0,00 TL</div>
+        <div id="status" style="font-size: 0.65rem; color: var(--text-dim);">Veriler yükleniyor...</div>
+        <span id="source-badge"></span>
     </div>
 
-    <div class="rates">
-        <div class="rate-box">USD<br><b id="rate-usd">...</b></div>
-        <div class="rate-box">GRAM<br><b id="rate-gram">...</b></div>
-        <div class="rate-box">ÇEYREK<br><b id="rate-ceyrek">...</b></div>
+    <div class="section-title">CANLI PİYASA (ALIŞ)</div>
+    <div class="rates-container">
+        <div class="rate-box"><span style="font-size:0.7rem; display:block;">USD/TRY</span><span id="rate-usd" class="rate-val">...</span></div>
+        <div class="rate-box"><span style="font-size:0.7rem; display:block;">GRAM ALTIN</span><span id="rate-gram" class="rate-val">...</span></div>
+        <div class="rate-box"><span style="font-size:0.7rem; display:block;">ÇEYREK ALTIN</span><span id="rate-ceyrek" class="rate-val">...</span></div>
     </div>
 
-    <div id="asset-list" style="width:100%; max-width:500px;"></div>
+    <div class="section-title">VARLIKLARIM</div>
+    <div id="asset-list"></div>
 
-    <button onclick="saveMilestone()" style="width:100%; max-width:500px; height:55px; background:var(--blue); border:none; border-radius:15px; margin-top:15px; font-weight:bold; color:#000;">AYLIK KAYIT OLUŞTUR</button>
+    <div class="chart-container"><canvas id="growthChart"></canvas></div>
 
-    <div id="milestone-list" style="width:100%; max-width:500px; margin-top:20px;"></div>
+    <button class="btn-main" onclick="saveMilestone()">AYLIK DEĞİŞİMİ KAYDET</button>
+
+    <div class="section-title">GEÇMİŞ KAYITLAR</div>
+    <div id="milestone-list"></div>
+
+    <div class="footer">Siber Kasa v4.4 - Mustafa Üner<br>Çoklu kaynak sistemi (truncgil › allorigins › corsproxy › thingproxy › uluslararası)</div>
 
     <script>
-        // BURAYA GOOGLE'DAN ALDIĞIN URL'Yİ YAPIŞTIR
-        const GOOGLE_PROXY_URL = "https://script.google.com/macros/s/AKfycbxd8iKLp5urDIwyXRmnHAjqrxjQqfeXerSozDDOFTdzbAf3vhta6-7FvNdJBjwgN4B5Iw/exec";
+        // ─────────────────────────────────────────────────────────
+        //  SABITLER
+        // ─────────────────────────────────────────────────────────
+        const TRUNCGIL_URL = "https://finans.truncgil.com/today.json";
 
-        let rates = { usd: 0, gram: 0, ceyrek: 0 };
-        let myAssets = JSON.parse(localStorage.getItem('assets')) || { usd: 0, gram: 0, ceyrek: 0, nakit: 0 };
+        // Her proxy fonksiyonu hedef URL'yi sarmalayarak döner.
+        // Sırayla denenir; ilk başarılı olan kullanılır.
+        const PROXIES = [
+            u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+            u => `https://thingproxy.freeboard.io/fetch/${u}`,
+        ];
 
+        // ─────────────────────────────────────────────────────────
+        //  DURUM
+        // ─────────────────────────────────────────────────────────
+        let rates      = { usd: 0, gram: 0, ceyrek: 0 };
+        let myAssets   = JSON.parse(localStorage.getItem('assets'))     || { usd: 0, gram: 0, ceyrek: 0, nakit: 0 };
+        let history    = JSON.parse(localStorage.getItem('history'))    || [];
+        let milestones = JSON.parse(localStorage.getItem('milestones')) || [];
+        let chartInstance = null;
+
+        // ─────────────────────────────────────────────────────────
+        //  YARDIMCI FONKSİYONLAR
+        // ─────────────────────────────────────────────────────────
+
+        /** Türkçe sayı formatını (1.234,56) JS float'a çevirir */
+        function parseTR(val) {
+            if (val == null) return 0;
+            return parseFloat(String(val).replace(/\./g, '').replace(',', '.')) || 0;
+        }
+
+        /** Zaman aşımlı fetch (varsayılan 7 sn) */
+        function fetchTimeout(url, ms) {
+            ms = ms || 7000;
+            const ctrl = new AbortController();
+            const id = setTimeout(function() { ctrl.abort(); }, ms);
+            return fetch(url, { signal: ctrl.signal })
+                .then(function(r) { clearTimeout(id); return r; })
+                .catch(function(e) { clearTimeout(id); throw e; });
+        }
+
+        // ─────────────────────────────────────────────────────────
+        //  KAYNAK 1 – truncgil.com (proxy üzerinden)
+        // ─────────────────────────────────────────────────────────
+        async function tryTruncgil(proxyFn) {
+            const res = await fetchTimeout(proxyFn(TRUNCGIL_URL));
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+
+            const usd    = parseTR(data["ABD DOLARI"]  && data["ABD DOLARI"]["Alış"]);
+            const gram   = parseTR(data["Gram Altın"]  && data["Gram Altın"]["Alış"]);
+            const ceyrek = parseTR(data["Çeyrek Altın"] && data["Çeyrek Altın"]["Alış"]);
+
+            if (usd < 1 || gram < 100) throw new Error('Geçersiz veri: usd=' + usd + ' gram=' + gram);
+            return { usd: usd, gram: gram, ceyrek: ceyrek };
+        }
+
+        // ─────────────────────────────────────────────────────────
+        //  KAYNAK 2 – Uluslararası API'ler (Son Çare)
+        //  • Frankfurter.app → USD/TRY (ECB bazlı, CORS açık)
+        //  • metals.live     → Altın spot USD/oz (CORS açık)
+        //
+        //  Türk piyasa primleri yaklaşık olarak eklenir:
+        //    Gram altın  ≈ spot × kur × 1.07  (~%7 prim)
+        //    Çeyrek      ≈ gram × 1.628        (1.606 gr saf altın + ~%1.4 prim)
+        // ─────────────────────────────────────────────────────────
+        async function tryInternational() {
+            // USD/TRY
+            const fxRes = await fetchTimeout('https://api.frankfurter.app/latest?from=USD&to=TRY');
+            if (!fxRes.ok) throw new Error('FX API ' + fxRes.status);
+            const fxData = await fxRes.json();
+            const usd = fxData && fxData.rates && fxData.rates.TRY;
+            if (!usd || usd < 1) throw new Error('FX veri geçersiz');
+
+            // Altın spot
+            const goldRes = await fetchTimeout('https://api.metals.live/v1/spot/gold');
+            if (!goldRes.ok) throw new Error('Gold API ' + goldRes.status);
+            const goldData = await goldRes.json();
+            // metals.live [{"gold": ...}] veya {"gold": ...} formatı döner
+            const goldOz = (Array.isArray(goldData) ? goldData[0].gold : goldData.gold);
+            if (!goldOz || goldOz < 100) throw new Error('Altın veri geçersiz');
+
+            const gram   = (goldOz / 31.1035) * usd * 1.07;
+            const ceyrek = gram * 1.628;
+
+            return { usd: usd, gram: gram, ceyrek: ceyrek };
+        }
+
+        // ─────────────────────────────────────────────────────────
+        //  ANA VERİ ÇEKME FONKSİYONU
+        // ─────────────────────────────────────────────────────────
         async function fetchRates() {
+            setStatus('Veriler güncelleniyor...', '', '');
+
+            // Aşama 1: Her proxy'yi sırayla dene
+            for (let i = 0; i < PROXIES.length; i++) {
+                try {
+                    const r = await tryTruncgil(PROXIES[i]);
+                    applyRates(r);
+                    setStatus(
+                        'Güncellendi: ' + new Date().toLocaleTimeString('tr-TR'),
+                        'live',
+                        '🟢 Canlı veri (truncgil, proxy ' + (i + 1) + ')'
+                    );
+                    return;
+                } catch (e) {
+                    console.warn('Proxy ' + (i + 1) + ' başarısız:', e.message);
+                }
+            }
+
+            // Aşama 2: Uluslararası yedek
             try {
-                const response = await fetch(GOOGLE_PROXY_URL);
-                const data = await response.json();
-
-                const parse = (v) => parseFloat(v.replace(".","").replace(",",".")) || 0;
-
-                rates.usd = parse(data["ABD DOLARI"].Alış);
-                rates.gram = parse(data["Gram Altın"].Alış);
-                rates.ceyrek = parse(data["Çeyrek Altın"].Alış);
-
-                document.getElementById('rate-usd').innerText = rates.usd.toFixed(2) + " ₺";
-                document.getElementById('rate-gram').innerText = rates.gram.toFixed(2) + " ₺";
-                document.getElementById('rate-ceyrek').innerText = rates.ceyrek.toFixed(0) + " ₺";
-
-                document.getElementById('status').innerText = "Google Cloud Üzerinden Bağlandı: " + new Date().toLocaleTimeString();
-                calculateTotal();
+                const r = await tryInternational();
+                applyRates(r);
+                setStatus(
+                    'Güncellendi: ' + new Date().toLocaleTimeString('tr-TR'),
+                    'approx',
+                    '🟡 Yaklaşık veri (Frankfurter + metals.live)'
+                );
+                return;
             } catch (e) {
-                document.getElementById('status').innerText = "Google Proxy Bekleniyor...";
-                console.error(e);
+                console.error('Uluslararası API de başarısız:', e.message);
+            }
+
+            // Aşama 3: Tamamen başarısız
+            setStatus('Bağlantı kurulamadı. Otomatik yeniden deneniyor...', 'error', '🔴 Veri alınamıyor');
+        }
+
+        // ─────────────────────────────────────────────────────────
+        //  UI GÜNCELLEME
+        // ─────────────────────────────────────────────────────────
+        function applyRates(r) {
+            rates.usd    = r.usd;
+            rates.gram   = r.gram;
+            rates.ceyrek = r.ceyrek;
+
+            document.getElementById('rate-usd').innerText    = r.usd.toFixed(2)    + ' ₺';
+            document.getElementById('rate-gram').innerText   = r.gram.toFixed(2)   + ' ₺';
+            document.getElementById('rate-ceyrek').innerText = r.ceyrek.toFixed(0) + ' ₺';
+
+            calculateTotal();
+        }
+
+        function setStatus(msg, type, badge) {
+            document.getElementById('status').innerText = msg;
+            var el = document.getElementById('source-badge');
+            if (badge) {
+                el.innerText = badge;
+                el.className = 'badge-' + (type || 'live');
+                el.style.display = 'inline-block';
+            } else {
+                el.style.display = 'none';
             }
         }
 
+        // ─────────────────────────────────────────────────────────
+        //  VARLIKLAR & HESAPLAMA (orijinal mantık korundu)
+        // ─────────────────────────────────────────────────────────
         function renderAssets() {
-            const container = document.getElementById('asset-list');
-            const types = [{id:'usd', n:'Dolar ($)'}, {id:'gram', n:'Gram Altın'}, {id:'ceyrek', n:'Çeyrek Altın'}, {id:'nakit', n:'Nakit (TL)'}];
+            var container = document.getElementById('asset-list');
+            var types = [
+                { id: 'usd',    name: 'Dolar ($)' },
+                { id: 'gram',   name: 'Gram Altın (Gr)' },
+                { id: 'ceyrek', name: 'Çeyrek Altın (Adet)' },
+                { id: 'nakit',  name: 'Nakit (TL)' }
+            ];
             container.innerHTML = '';
-            types.forEach(a => {
-                const div = document.createElement('div');
+            types.forEach(function(asset) {
+                var div = document.createElement('div');
                 div.className = 'asset-card';
-                div.innerHTML = `<div>${a.n}</div><input type="number" value="${myAssets[a.id]}" oninput="updateAsset('${a.id}', this.value)"> <div id="tl-${a.id}" style="font-weight:bold; width:100px; text-align:right;">0,00 ₺</div>`;
+                div.innerHTML =
+                    '<div class="asset-info"><div class="asset-name">' + asset.name + '</div></div>' +
+                    '<input type="number" inputmode="decimal" value="' + myAssets[asset.id] + '" oninput="updateAsset(\'' + asset.id + '\', this.value)">' +
+                    '<div class="asset-tl" id="tl-' + asset.id + '">0,00 ₺</div>';
                 container.appendChild(div);
             });
         }
 
-        function updateAsset(id, v) {
-            myAssets[id] = parseFloat(v) || 0;
+        function updateAsset(id, val) {
+            myAssets[id] = parseFloat(val) || 0;
             localStorage.setItem('assets', JSON.stringify(myAssets));
             calculateTotal();
         }
 
         function calculateTotal() {
-            const r = { usd: myAssets.usd * rates.usd, gram: myAssets.gram * rates.gram, ceyrek: myAssets.ceyrek * rates.ceyrek, nakit: myAssets.nakit };
-            Object.keys(r).forEach(k => {
-                if(document.getElementById(`tl-${k}`)) document.getElementById(`tl-${k}`).innerText = r[k].toLocaleString('tr-TR') + " ₺";
+            var results = {
+                usd:    myAssets.usd    * (rates.usd    || 0),
+                gram:   myAssets.gram   * (rates.gram   || 0),
+                ceyrek: myAssets.ceyrek * (rates.ceyrek || 0),
+                nakit:  myAssets.nakit  || 0
+            };
+
+            Object.keys(results).forEach(function(id) {
+                var el = document.getElementById('tl-' + id);
+                if (el) el.innerText = results[id].toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺';
             });
-            const total = Object.values(r).reduce((a,b)=>a+b, 0);
-            document.getElementById('total-val').innerText = total.toLocaleString('tr-TR', {minimumFractionDigits:2}) + " ₺";
+
+            var total = Object.values(results).reduce(function(a, b) { return a + b; }, 0);
+            document.getElementById('total-val').innerText =
+                total.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺';
+
+            saveDailyData(total);
+        }
+
+        function saveDailyData(total) {
+            if (total <= 0) return;
+            var today = new Date().toLocaleDateString('tr-TR');
+            if (history.length === 0 || history[history.length - 1].date !== today) {
+                history.push({ date: today, value: total });
+            } else {
+                history[history.length - 1].value = total;
+            }
+            if (history.length > 30) history.shift();
+            localStorage.setItem('history', JSON.stringify(history));
+            renderChart();
         }
 
         function saveMilestone() {
-            let m = JSON.parse(localStorage.getItem('milestones')) || [];
-            m.unshift({d: new Date().toLocaleString('tr-TR'), v: document.getElementById('total-val').innerText});
-            localStorage.setItem('milestones', JSON.stringify(m));
+            var total = document.getElementById('total-val').innerText;
+            if (total === "0,00 TL") return alert("Kayıt için önce varlık miktarınızı girin.");
+            milestones.unshift({ date: new Date().toLocaleString('tr-TR'), value: total });
+            localStorage.setItem('milestones', JSON.stringify(milestones));
             renderMilestones();
         }
 
         function renderMilestones() {
-            const m = JSON.parse(localStorage.getItem('milestones')) || [];
-            document.getElementById('milestone-list').innerHTML = m.map(x => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; font-size:0.75rem;"><span>${x.d}</span><b>${x.v}</b></div>`).join('');
+            var container = document.getElementById('milestone-list');
+            container.innerHTML = milestones.map(function(m) {
+                return '<div class="milestone-item"><span>' + m.date + '</span><span style="color:var(--cyber-green); font-weight:bold;">' + m.value + '</span></div>';
+            }).join('');
         }
 
-        window.onload = () => { renderAssets(); renderMilestones(); fetchRates(); setInterval(fetchRates, 60000); };
+        function renderChart() {
+            var canvas = document.getElementById('growthChart');
+            var ctx = canvas.getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: history.map(function(h) { return h.date.substring(0, 5); }),
+                    datasets: [{
+                        data: history.map(function(h) { return h.value; }),
+                        borderColor: '#00d2ff',
+                        backgroundColor: 'rgba(0, 210, 255, 0.1)',
+                        fill: true, tension: 0.3, pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { display: false },
+                        x: { ticks: { color: '#8b949e', font: { size: 9 } }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────
+        //  BAŞLATMA
+        // ─────────────────────────────────────────────────────────
+        window.onload = function() {
+            renderAssets();
+            renderMilestones();
+            fetchRates();
+            setInterval(fetchRates, 60000); // 1 dakikada bir otomatik yenile
+        };
     </script>
 </body>
 </html>
