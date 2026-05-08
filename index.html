@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Siber Kasa v9.4</title>
+    <title>Siber Kasa v9.5</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b1117">
     <style>
@@ -16,12 +16,15 @@
         .rates { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 15px; }
         .rate-box { flex:1; background: var(--card); padding: 10px; border-radius: 10px; text-align: center; font-size: 0.75rem; border: 1px solid #333; }
         
-        /* Yeni Buton Stilleri */
         .btn-main { width: 100%; max-width: 500px; height: 50px; background: var(--blue); border: none; border-radius: 15px; margin-top: 10px; font-weight: bold; color: #000; cursor: pointer; }
         .btn-main:active { opacity: 0.8; }
         .action-row { display: flex; gap: 10px; width: 100%; max-width: 500px; margin-top: 15px; }
         .btn-sub { flex: 1; height: 44px; background: #1c2128; border: 1px solid #333; border-radius: 12px; color: var(--text); font-weight: bold; cursor: pointer; font-size: 0.8rem; }
         .btn-sub:active { background: #2d333b; }
+        
+        .milestone-item { padding: 12px 10px; border-bottom: 1px solid #333; }
+        .milestone-header { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; }
+        .milestone-detail { font-size: 0.65rem; color: #8b949e; background: #0b1117; padding: 6px; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -51,7 +54,6 @@
     <div id="milestone-list" style="width:100%; max-width:500px; margin-top:20px; padding-bottom: 30px;"></div>
 
     <script>
-        // KESİNLİKLE DOKUNULMAYAN VERİ ÇEKME MOTORU VE KATSAYILAR
         const GOOGLE_PROXY_URL = "https://script.google.com/macros/s/AKfycbxd8iKLp5urDIwyXRmnHAjqrxjQqfeXerSozDDOFTdzbAf3vhta6-7FvNdJBjwgN4B5Iw/exec";
         const KATSAYI_USD = 0.9708;
         const KATSAYI_GRAM = 0.9876;
@@ -119,39 +121,63 @@
             document.getElementById('total-val').innerText = total.toLocaleString('tr-TR', {minimumFractionDigits:2}) + " ₺";
         }
 
+        // --- ZAMAN KAPSÜLÜ (SNAPSHOT) DESTEKLİ KAYIT ---
         function saveMilestone() {
             let m = JSON.parse(localStorage.getItem('milestones')) || [];
-            m.unshift({d: new Date().toLocaleString('tr-TR', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric'}), v: document.getElementById('total-val').innerText});
+            
+            // O anki tüm verilerin dondurulmuş kopyası
+            let snapshot = {
+                varliklar: { usd: myAssets.usd, gram: myAssets.gram, ceyrek: myAssets.ceyrek, nakit: myAssets.nakit },
+                kurlar: { usd: rates.usd.toFixed(2), gram: rates.gram.toFixed(2), ceyrek: rates.ceyrek.toFixed(2) }
+            };
+
+            m.unshift({
+                d: new Date().toLocaleString('tr-TR', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric'}), 
+                v: document.getElementById('total-val').innerText,
+                detay: snapshot
+            });
+            
             localStorage.setItem('milestones', JSON.stringify(m));
             renderMilestones();
         }
 
         function renderMilestones() {
             const m = JSON.parse(localStorage.getItem('milestones')) || [];
-            document.getElementById('milestone-list').innerHTML = m.map(x => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; font-size:0.8rem;"><span>${x.d}</span><b>${x.v}</b></div>`).join('');
+            document.getElementById('milestone-list').innerHTML = m.map(x => {
+                let detayHtml = '';
+                // Eğer detay (snapshot) varsa, mini bir özet kutusu oluştur
+                if(x.detay && x.detay.varliklar) {
+                    const v = x.detay.varliklar;
+                    detayHtml = `<div class="milestone-detail">
+                        ${v.usd} $ | ${v.gram} Gr | ${v.ceyrek} Çeyrek | ${v.nakit} TL Nakit
+                    </div>`;
+                }
+                
+                return `
+                <div class="milestone-item">
+                    <div class="milestone-header">
+                        <span>${x.d}</span>
+                        <b style="color:var(--green);">${x.v}</b>
+                    </div>
+                    ${detayHtml}
+                </div>`;
+            }).join('');
         }
 
-        // --- YENİ EKLENEN YEDEKLEME VE GERİ YÜKLEME SİSTEMİ ---
-        
         function exportData() {
-            // Hafızadaki tüm verileri topla
             const dataToExport = {
                 assets: JSON.parse(localStorage.getItem('assets')) || { usd: 0, gram: 0, ceyrek: 0, nakit: 0 },
                 milestones: JSON.parse(localStorage.getItem('milestones')) || []
             };
 
-            // Veriyi metin formatına çevir
             const dataStr = JSON.stringify(dataToExport, null, 2);
-            // Mobilde sorun çıkarmaması için MIME tipini plain/text yapıyoruz
             const blob = new Blob([dataStr], { type: "text/plain" });
             const url = URL.createObjectURL(blob);
             
-            // Tarihli Dosya Adı Oluşturma (Örn: SiberKasa_Yedek_2026-05-08)
             const dateObj = new Date();
             const dateStr = dateObj.toISOString().split('T')[0];
             const fileName = `SiberKasa_Yedek_${dateStr}.txt`;
 
-            // İndirme işlemini tetikle
             const a = document.createElement("a");
             a.href = url;
             a.download = fileName;
@@ -169,31 +195,22 @@
             reader.onload = function(e) {
                 try {
                     const importedData = JSON.parse(e.target.result);
-                    
-                    // Verileri kontrol et ve hafızaya yaz
                     if (importedData.assets) {
                         localStorage.setItem('assets', JSON.stringify(importedData.assets));
-                        myAssets = importedData.assets; // Aktif değişkeni güncelle
+                        myAssets = importedData.assets; 
                     }
                     if (importedData.milestones) {
                         localStorage.setItem('milestones', JSON.stringify(importedData.milestones));
                     }
-                    
-                    // Arayüzü yenile
                     renderAssets();
                     renderMilestones();
                     calculateTotal();
-                    
                     alert("Yedek başarıyla geri yüklendi!");
                 } catch (error) {
-                    alert("Hata: Yüklemeye çalıştığınız dosya geçerli bir yedekleme dosyası değil.");
-                    console.error("Yükleme hatası:", error);
+                    alert("Hata: Geçerli bir SiberKasa yedek dosyası seçilmedi.");
                 }
-                
-                // Aynı dosyayı tekrar seçebilmek için input'u sıfırla
                 event.target.value = "";
             };
-            
             reader.readAsText(file);
         }
 
