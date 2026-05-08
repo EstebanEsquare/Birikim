@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Siber Kasa v9.1</title>
+    <title>Siber Kasa v9.2</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b1117">
     <style>
@@ -14,7 +14,7 @@
         .asset-card { width: 100%; max-width: 500px; background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
         input { width: 90px; background: #1c2128; border: 1px solid #333; color: var(--green); padding: 10px; border-radius: 8px; text-align: center; font-size: 1rem; }
         .rates { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 15px; }
-        .rate-box { flex:1; background: var(--card); padding: 10px; border-radius: 10px; text-align: center; font-size: 0.8rem; border: 1px solid #333; }
+        .rate-box { flex:1; background: var(--card); padding: 10px; border-radius: 10px; text-align: center; font-size: 0.75rem; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -22,13 +22,13 @@
     <div class="header">
         <div style="font-size: 0.8rem; opacity: 0.7;">TOPLAM VARLIK (TL)</div>
         <div id="total-val" class="total">0,00 TL</div>
-        <div id="status" style="font-size:0.6rem; margin-top:10px; color: var(--blue);">Banka Verileri Senkronize Ediliyor...</div>
+        <div id="status" style="font-size:0.6rem; margin-top:10px; color: var(--blue);">Banka Verileri Bekleniyor...</div>
     </div>
 
     <div class="rates">
-        <div class="rate-box">İş Bankası USD<br><b id="rate-usd">...</b></div>
-        <div class="rate-box">YK Gram<br><b id="rate-gram">...</b></div>
-        <div class="rate-box">Serbest Çeyrek<br><b id="rate-ceyrek">...</b></div>
+        <div class="rate-box">İş Bankası USD<br><b id="rate-usd" style="font-size:0.95rem;">...</b></div>
+        <div class="rate-box">YK Gram<br><b id="rate-gram" style="font-size:0.95rem;">...</b></div>
+        <div class="rate-box">Çeyrek<br><b id="rate-ceyrek" style="font-size:0.95rem;">...</b></div>
     </div>
 
     <div id="asset-list" style="width:100%; max-width:500px;"></div>
@@ -38,18 +38,20 @@
     <div id="milestone-list" style="width:100%; max-width:500px; margin-top:20px;"></div>
 
     <script>
-        // KENDİ GOOGLE SCRIPT URL'Nİ BURAYA YAPIŞTIR
+        // Senin Google Script Linkin (Hatasız şekilde gömüldü ve yönlendirme izni verildi)
         const GOOGLE_PROXY_URL = "https://script.google.com/macros/s/AKfycbxd8iKLp5urDIwyXRmnHAjqrxjQqfeXerSozDDOFTdzbAf3vhta6-7FvNdJBjwgN4B5Iw/exec";
         
-        // Yapı Kredi'nin dijital altın makas farkını simüle eden katsayı (~%1.3 indirim)
-        const YAPIKREDI_KATSAYISI = 0.9868;
+        // Serbest piyasa Gram fiyatını, Yapı Kredi'deki 6787 TL hedefine uyarlayan katsayı
+        const YAPIKREDI_KATSAYISI = 0.9913;
 
         let rates = { usd: 0, gram: 0, ceyrek: 0 };
         let myAssets = JSON.parse(localStorage.getItem('assets')) || { usd: 0, gram: 0, ceyrek: 0, nakit: 0 };
 
         async function fetchRates() {
             try {
-                const response = await fetch(GOOGLE_PROXY_URL);
+                // Google Apps Script redirect (302) döndürdüğü için 'follow' kuralı eklendi
+                const response = await fetch(GOOGLE_PROXY_URL, { redirect: "follow" });
+                if(!response.ok) throw new Error("Ağ yanıtı olumsuz.");
                 const data = await response.json();
                 
                 const parse = (v) => {
@@ -57,25 +59,25 @@
                     return parseFloat(v.replace(/\./g, "").replace(",", ".")) || 0;
                 };
                 
-                // USD (İş Bankası / Serbest piyasa birebir uyar)
+                // Verileri Parse Etme
                 rates.usd = parse(data["USD"]["Alış"]);
                 
-                // GRAM ALTIN (Serbest piyasa "gram-has-altin" değerini Yapı Kredi dijital fiyatına dönüştür)
+                // Has gram altını al ve Yapı Kredi oranına çek
                 let serbestGram = parse(data["gram-has-altin"]["Alış"]);
                 rates.gram = serbestGram * YAPIKREDI_KATSAYISI; 
                 
-                // ÇEYREK ALTIN (Genelde fiziki tutulduğu için serbest piyasa değeri korunur)
                 rates.ceyrek = parse(data["ceyrek-altin"]["Alış"]);
 
+                // Ekrana Yazdırma
                 document.getElementById('rate-usd').innerText = rates.usd.toFixed(2) + " ₺";
                 document.getElementById('rate-gram').innerText = rates.gram.toFixed(2) + " ₺";
                 document.getElementById('rate-ceyrek').innerText = rates.ceyrek.toFixed(0) + " ₺";
                 
-                document.getElementById('status').innerText = "Veri Akışı Sağlandı: " + new Date().toLocaleTimeString();
+                document.getElementById('status').innerText = "Son Senkronizasyon: " + new Date().toLocaleTimeString();
                 calculateTotal();
             } catch (e) {
-                document.getElementById('status').innerText = "Veri Ayrıştırma Hatası!";
-                console.error(e);
+                document.getElementById('status').innerText = "Veri alınamıyor. Tekrar denenecek...";
+                console.error("Hata Detayı:", e);
             }
         }
 
@@ -86,7 +88,7 @@
             types.forEach(a => {
                 const div = document.createElement('div');
                 div.className = 'asset-card';
-                div.innerHTML = `<div>${a.n}</div><input type="number" inputmode="decimal" value="${myAssets[a.id]}" oninput="updateAsset('${a.id}', this.value)"> <div id="tl-${a.id}" style="font-weight:bold; width:100px; text-align:right;">0,00 ₺</div>`;
+                div.innerHTML = `<div>${a.n}</div><input type="number" inputmode="decimal" value="${myAssets[a.id]}" oninput="updateAsset('${a.id}', this.value)"> <div id="tl-${a.id}" style="font-weight:bold; width:110px; text-align:right;">0,00 ₺</div>`;
                 container.appendChild(div);
             });
         }
@@ -108,14 +110,14 @@
 
         function saveMilestone() {
             let m = JSON.parse(localStorage.getItem('milestones')) || [];
-            m.unshift({d: new Date().toLocaleString('tr-TR'), v: document.getElementById('total-val').innerText});
+            m.unshift({d: new Date().toLocaleString('tr-TR', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric'}), v: document.getElementById('total-val').innerText});
             localStorage.setItem('milestones', JSON.stringify(m));
             renderMilestones();
         }
 
         function renderMilestones() {
             const m = JSON.parse(localStorage.getItem('milestones')) || [];
-            document.getElementById('milestone-list').innerHTML = m.map(x => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; font-size:0.75rem;"><span>${x.d}</span><b>${x.v}</b></div>`).join('');
+            document.getElementById('milestone-list').innerHTML = m.map(x => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; font-size:0.8rem;"><span>${x.d}</span><b>${x.v}</b></div>`).join('');
         }
 
         window.onload = () => { renderAssets(); renderMilestones(); fetchRates(); setInterval(fetchRates, 60000); };
